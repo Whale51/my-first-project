@@ -1,0 +1,14 @@
+# 可选增强依赖（不装也能运行，装了可获得更高保真的 PDF 导出）
+#
+# 1) pywin32：Windows 下调用本机 Microsoft Word（COM）把 .docx 导出为 PDF，
+#    与 Word 版式 100% 一致（页眉页脚、表格边框、嵌入图表全部保留）。
+#        pip install pywin32
+#
+# 2) LibreOffice（非 Python 依赖，需另行安装）：跨平台的 docx→pdf 转换后端，
+#    系统会按 PDF_ENGINE=auto 自动探测 soffice / soffice.exe。
+#        Windows/macOS: https://www.libreoffice.org/download/
+#        Ubuntu/Debian: sudo apt install libreoffice-writer
+#
+# PDF 导出后端优先级（可用环境变量 PDF_ENGINE 指定 auto|libreoffice|word|native）：
+#    libreoffice → word → native(reportlab 内置排版，永远可用)
+pywin32>=306; sys_platform == "win32"

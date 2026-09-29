@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>制药企业成本智能分析报告系统</title>
+<script src="/static/echarts.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:"Microsoft YaHei",sans-serif; }
+  body { background:#f4f6f9; color:#2c3e50; }
+  header { background:#0f6e56; color:#fff; padding:14px 28px; display:flex; justify-content:space-between;
+           align-items:center; gap:12px; flex-wrap:wrap; }
+  header h1 { font-size:18px; font-weight:500; }
+  header .badges { display:flex; gap:8px; flex-wrap:wrap; }
+  header .badge { font-size:12px; background:rgba(255,255,255,.18); padding:4px 12px; border-radius:12px; }
+  header .badge.ok { background:rgba(255,255,255,.32); }
+  nav { display:flex; background:#fff; border-bottom:1px solid #e5e8ec; padding:0 28px; overflow-x:auto; }
+  nav button { border:none; background:none; padding:14px 18px; font-size:14px; color:#667; cursor:pointer;
+               border-bottom:2px solid transparent; white-space:nowrap; }
+  nav button.active { color:#0f6e56; border-bottom-color:#0f6e56; font-weight:bold; }
+  main { padding:20px 28px; max-width:1320px; margin:0 auto; }
+  .panel { display:none; } .panel.active { display:block; }
+  .cards { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:18px; }
+  .card { background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .card .label { font-size:12px; color:#889; }
+  .card .value { font-size:20px; font-weight:bold; margin-top:6px; color:#0f6e56; }
+  .card .sub { font-size:12px; margin-top:4px; }
+  .up { color:#c0392b; } .down { color:#27ae60; }
+  .charts { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .chart-box { background:#fff; border-radius:10px; padding:14px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .chart-box h3 { font-size:14px; font-weight:500; margin-bottom:8px; color:#345; }
+  .chart { width:100%; height:300px; }
+  .chart.tall { height:420px; }
+  .chart.xl { height:560px; }
+  .toolbar { display:flex; gap:12px; align-items:center; margin-bottom:16px; background:#fff; padding:14px 18px;
+             border-radius:10px; flex-wrap:wrap; }
+  .toolbar label { font-size:13px; color:#556; }
+  select, input[type=text] { padding:8px 12px; border:1px solid #ccd; border-radius:6px; font-size:13px; }
+  .btn { padding:9px 20px; background:#0f6e56; color:#fff; border:none; border-radius:6px; font-size:13px;
+         cursor:pointer; text-decoration:none; display:inline-block; }
+  .btn:hover { background:#0c5c48; }
+  .btn.gray { background:#8a94a6; } .btn.gray:hover { background:#7a8496; }
+  .btn.pdf { background:#b4524c; } .btn.pdf:hover { background:#9c423d; }
+  .btn.ghost { background:#fff; color:#0f6e56; border:1px solid #0f6e56; }
+  .btn[disabled], .btn.disabled { background:#c3cbd6; cursor:not-allowed; pointer-events:none; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; font-size:13px; }
+  th { background:#eef4f2; color:#234; padding:10px; text-align:left; font-weight:500; }
+  td { padding:9px 10px; border-top:1px solid #eef0f3; }
+  .table-wrap { overflow-x:auto; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:10px; font-size:12px; }
+  .tag.high { background:#fdecea; color:#c0392b; } .tag.mid { background:#fdf3e0; color:#b9770e; }
+  .tag.low { background:#e8f6f0; color:#0f6e56; }
+  .tag.info { background:#eaeffa; color:#2f5aa8; }
+  .section { background:#fff; border-radius:10px; padding:18px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .section h3 { font-size:14px; font-weight:500; margin-bottom:10px; color:#345; }
+  .rca-text { font-size:13.5px; line-height:1.9; white-space:pre-wrap; color:#333; }
+  .src { font-size:12px; color:#789; margin-top:10px; }
+  .alert-item { padding:8px 12px; border-left:3px solid #c0392b; background:#fdf3f2; margin-bottom:6px;
+                font-size:13px; border-radius:0 6px 6px 0; }
+  .stat-row { display:flex; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+  .stat-row .card { flex:1; min-width:150px; }
+  .hint { font-size:12px; color:#9aa; margin-top:6px; }
+  .dl-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .chart-gallery { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px; }
+  .chart-gallery figure { background:#fafbfc; border:1px solid #eef0f3; border-radius:8px; padding:8px; }
+  .chart-gallery img { width:100%; display:block; border-radius:4px; }
+  .chart-gallery figcaption { font-size:12px; color:#6b7785; margin-top:6px; text-align:center; }
+  .kv { font-size:12.5px; color:#556; line-height:1.9; }
+  .kv b { color:#234; }
+  .badge-ok { background:#e8f6f0; color:#0f6e56; padding:3px 10px; border-radius:10px; font-size:12px; }
+  .badge-warn { background:#fdf3e0; color:#b9770e; padding:3px 10px; border-radius:10px; font-size:12px; }
+  /* 时间轴 */
+  .timeline { border-left:2px solid #e3e8ee; margin-left:8px; padding-left:16px; }
+  .tl-item { position:relative; padding-bottom:14px; }
+  .tl-item:before { content:''; position:absolute; left:-23px; top:4px; width:10px; height:10px; border-radius:50%;
+                    background:#0f6e56; box-shadow:0 0 0 3px #e8f6f0; }
+  .tl-item.done:before { background:#2f5aa8; box-shadow:0 0 0 3px #eaeffa; }
+  .tl-head { font-size:13px; font-weight:500; color:#234; }
+  .tl-body { font-size:12.5px; color:#667; margin-top:3px; line-height:1.7; }
+  .tl-sub { margin-top:6px; padding-left:10px; border-left:2px dashed #e3e8ee; }
+  .tl-sub div { font-size:12px; color:#7b8794; line-height:1.8; }
+  /* 提示与加载 */
+  #toasts { position:fixed; right:18px; top:18px; z-index:999; display:flex; flex-direction:column; gap:8px; }
+  .toast { min-width:220px; max-width:420px; padding:11px 14px; border-radius:8px; font-size:13px; color:#fff;
+           box-shadow:0 4px 14px rgba(0,0,0,.16); animation:fade .25s ease; }
+  .toast.info { background:#2f5aa8; } .toast.ok { background:#0f6e56; }
+  .toast.err { background:#c0392b; } .toast.warn { background:#b9770e; }
+  @keyframes fade { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  #loading { position:fixed; inset:0; background:rgba(244,246,249,.65); display:none; z-index:998;
+             align-items:center; justify-content:center; flex-direction:column; gap:14px; }
+  #loading.on { display:flex; }
+  .spinner { width:38px; height:38px; border:3px solid #cfe0da; border-top-color:#0f6e56; border-radius:50%;
+             animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loadingText { font-size:13px; color:#0f6e56; }
+  .loading-inline { display:inline-block; width:12px; height:12px; border:2px solid #dfe6ef;
+                    border-top-color:#0f6e56; border-radius:50%; animation:spin .8s linear infinite;
+                    vertical-align:-2px; }
+  @media (max-width: 1080px) {
+    .cards { grid-template-columns:repeat(2,1fr); }
+    .charts, .chart-gallery { grid-template-columns:1fr; }
+    main { padding:16px 14px; }
+    header { padding:12px 16px; } nav { padding:0 12px; }
+    .chart { height:260px; } .chart.tall { height:360px; } .chart.xl { height:460px; }
+  }
+  @media (max-width: 640px) {
+    .cards { grid-template-columns:1fr; }
+    header h1 { font-size:15px; }
+    .toolbar { gap:8px; } .btn { padding:8px 14px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>基于 RAG 与大模型的制药企业产品成本智能分析报告系统</h1>
+  <div class="badges">
+    <span class="badge" id="llmBadge">检测引擎…</span>
+    <span class="badge" id="ragBadge">RAG…</span>
+    <span class="badge" id="capBadge">导出能力…</span>
+  </div>
+</header>
+<nav>
+  <button class="active" onclick="show('board',this)">成本看板</button>
+  <button onclick="show('report',this)">报告生成</button>
+  <button onclick="show('bench',this)">对标三步法</button>
+  <button onclick="show('rpa',this)">整改闭环</button>
+  <button onclick="show('kb',this)">知识库检索</button>
+  <button onclick="show('kg',this)">知识图谱</button>
+  <button onclick="show('agent',this)">智能体决策</button>
+  <button onclick="show('forecast',this)">成本预测</button>
+</nav>
+<main>
+  <!-- 成本看板 -->
+  <div id="board" class="panel active">
+    <div class="toolbar">
+      <label>月份 <select id="selMonth"></select></label>
+      <label>产品 <select id="selProduct"><option value="">全部产品</option></select></label>
+      <button class="btn" onclick="refreshBoard()">刷新看板</button>
+      <span class="hint" id="boardHint"></span>
+    </div>
+    <div class="cards" id="kpiCards"></div>
+    <div class="charts">
+      <div class="chart-box"><h3>成本趋势（近 6 个月）</h3><div id="chartTrend" class="chart"></div></div>
+      <div class="chart-box"><h3>成本构成（本月）</h3><div id="chartPie" class="chart"></div></div>
+      <div class="chart-box"><h3>要素变动瀑布（本月 vs 上月）</h3><div id="chartWater" class="chart"></div></div>
+      <div class="chart-box"><h3>产品 × 月份 × 要素 环比热力图</h3><div id="chartHeat" class="chart tall"></div></div>
+    </div>
+    <div class="section"><h3>阈值告警（环比 ±10%）</h3><div id="alertList">加载中…</div></div>
+    <div class="section"><h3>材料明细差异（前 8 项）</h3><div class="table-wrap"><table id="matTable"></table></div></div>
+  </div>
+
+  <!-- 报告生成 -->
+  <div id="report" class="panel">
+    <div class="toolbar">
+      <label>分析主题 <select id="repScene" onchange="onSceneChange()"></select></label>
+      <label id="repTopicWrap">专题方向 <select id="repTopic"></select></label>
+      <label>分析月份 <select id="repMonth"></select></label>
+      <label>目标产品 <select id="repProduct"></select></label>
+      <button class="btn" id="repBtn" onclick="genReport()">生成报告（模板 + RAG + 大模型）</button>
+      <span class="hint" id="repEngineHint"></span>
+    </div>
+    <div class="section" id="repResult" style="display:none">
+      <h3>报告生成结果</h3>
+      <div class="kv" id="repMeta"></div>
+      <div class="rca-text" id="repText"></div>
+      <div class="src" id="repSrc"></div>
+      <div class="dl-row">
+        <a id="repLink" class="btn" href="#" download>⬇ 下载 Word 报告（.docx）</a>
+        <a id="repPdfLink" class="btn pdf" href="#" download>⬇ 下载 PDF 报告（.pdf）</a>
+        <span id="repPdfNote" class="hint"></span>
+      </div>
+      <div id="repCharts" class="chart-gallery"></div>
+    </div>
+    <div class="section">
+      <h3>报告归档（Word / PDF 双格式）</h3>
+      <div class="table-wrap"><table id="repHistory"></table></div>
+    </div>
+  </div>
+
+  <!-- 对标分析 -->
+  <div id="bench" class="panel">
+    <div class="toolbar">
+      <label>月份 <select id="bmMonth"></select></label>
+      <button class="btn" onclick="runBench()">执行三步法（找差异 → 拆结构 → 拆原因）</button>
+      <span class="hint" id="bmHint"></span>
+    </div>
+    <div class="section"><h3>第一步 · 找差异（对标差异对比表）</h3>
+      <div class="table-wrap"><table id="bmTable"></table></div></div>
+    <div class="section"><h3>第二步 · 拆结构</h3><div id="bmTree" class="rca-text"></div></div>
+    <div class="section"><h3>第三步 · 拆原因（大模型/RAG 归因）</h3><div id="bmRca" class="rca-text"></div>
+      <div class="src" id="bmSrc"></div></div>
+  </div>
+
+  <!-- 整改闭环 -->
+  <div id="rpa" class="panel">
+    <div class="toolbar">
+      <label>月份 <select id="rpaMonth"></select></label>
+      <label>产品 <select id="rpaProduct"></select></label>
+      <button class="btn" onclick="dispatchRpa()">生成整改任务并推送 RPA</button>
+      <button class="btn gray" onclick="loadTasks(true)">刷新任务状态</button>
+      <span class="hint" id="rpaHint"></span>
+    </div>
+    <div class="stat-row" id="rpaStats"></div>
+    <div class="section"><h3>整改任务列表（模拟微信推送闭环）</h3>
+      <div class="table-wrap"><table id="rpaTable"></table></div></div>
+    <div class="section"><h3>任务追踪时间轴（状态流转事件流）</h3>
+      <div id="rpaTimeline" class="timeline"><span class="hint">加载中…</span></div></div>
+  </div>
+
+  <!-- 知识库检索 -->
+  <div id="kb" class="panel">
+    <div class="toolbar">
+      <input type="text" id="kbQuery" style="flex:1;min-width:240px" placeholder="例：当归价格为什么上涨？收率下降会怎样？"
+             value="连翘单耗上升的原因">
+      <label>检索模式 <select id="kbMode">
+        <option value="">默认（混合+图谱增强）</option>
+        <option value="hybrid">混合（BM25+向量）</option>
+        <option value="bm25">仅关键词 BM25</option>
+        <option value="vector">仅向量语义</option>
+      </select></label>
+      <button class="btn" onclick="searchKb()">RAG 混合检索</button>
+    </div>
+    <div class="section"><h3>知识库统计</h3><div class="kv" id="kbStats">加载中…</div></div>
+    <div class="section" id="kbResults"></div>
+  </div>
+
+  <!-- 知识图谱 -->
+  <div id="kg" class="panel">
+    <div class="toolbar">
+      <label>聚焦实体 <select id="kgFocus"><option value="">全部（概览）</option></select></label>
+      <button class="btn" onclick="loadGraph()">刷新图谱</button>
+      <label><input type="checkbox" id="kgShowEvidence" checked> 显示关系标签</label>
+      <span class="hint" id="kgHint"></span>
+    </div>
+    <div class="section"><h3>知识图谱（产品 / 药材 / 工序 / 设备 / 法规 / 异常记录）</h3>
+      <div id="kgChart" class="chart xl"></div></div>
+    <div class="section" id="kgDetail"><h3>实体详情</h3><div class="kv">点击图中节点查看关系与证据。</div></div>
+  </div>
+
+  <!-- 智能体决策 -->
+  <div id="agent" class="panel">
+    <div class="toolbar">
+      <label>月份 <select id="agMonth"></select></label>
+      <label>产品 <select id="agProduct"><option value="">全部产品</option></select></label>
+      <button class="btn ghost" onclick="decideAgent()">仅决策（不执行）</button>
+      <button class="btn" onclick="runAgent()">执行决策（自动出报告/下发整改）</button>
+      <span class="hint" id="agentHint"></span>
+    </div>
+    <div class="section"><h3>决策策略与阈值</h3><div class="kv" id="agentPolicy">加载中…</div></div>
+    <div class="section" id="agentResult" style="display:none">
+      <h3>决策结论</h3>
+      <div class="kv" id="agentDecision"></div>
+      <div class="rca-text" id="agentReason" style="margin-top:10px"></div>
+      <div class="table-wrap"><table id="agentChecks" style="margin-top:10px"></table></div>
+      <div class="kv" id="agentExec" style="margin-top:12px"></div>
+    </div>
+    <div class="section"><h3>决策历史（复盘用）</h3>
+      <div class="table-wrap"><table id="agentHistory"></table></div></div>
+  </div>
+
+  <!-- 成本预测 -->
+  <div id="forecast" class="panel">
+    <div class="toolbar">
+      <label>产品 <select id="fcProduct"></select></label>
+      <label>预测步数 <select id="fcSteps"><option>1</option><option selected>3</option><option>6</option></select></label>
+      <button class="btn" onclick="loadForecast()">运行预测（四模型回测对比）</button>
+      <span class="hint" id="fcHint"></span>
+    </div>
+    <div class="section"><h3>单位成本趋势与预测</h3><div id="fcChart" class="chart"></div></div>
+    <div class="section"><h3>模型回测对比（MAPE 越小越准，自动选优）</h3>
+      <div class="table-wrap"><table id="fcTable"></table></div>
+      <div class="hint" id="fcNote"></div></div>
+  </div>
+</main>
+
+<div id="loading"><div class="spinner"></div><div id="loadingText">处理中…</div></div>
+<div id="toasts"></div>
+
+<script>
+let META = { months: [], products: [], llm_ready: false };
+const $ = id => document.getElementById(id);
+const fmt = n => n == null ? '—' : Number(n).toLocaleString('zh-CN');
+const pct = n => n == null ? '—' : (n > 0 ? `+${n}%` : `${n}%`);
+const cls = n => n > 0 ? 'up' : 'down';
+const CHARTS = [];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const chart = id => {
+  let c = echarts.getInstanceByDom($(id));
+  if (!c) { c = echarts.init($(id)); CHARTS.push(c); }
+  else c.resize();
+  return c;
+};
+window.addEventListener('resize', () => CHARTS.forEach(c => c.resize()));
+
+/* ---------------- 通用 UX：加载态 / 错误提示 ---------------- */
+let LOADING = 0;
+function loading(on, text) {
+  LOADING = Math.max(0, LOADING + (on ? 1 : -1));
+  $('loadingText').textContent = text || '处理中…';
+  $('loading').classList.toggle('on', LOADING > 0);
+}
+function toast(msg, type = 'info', ms = 3600) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+async function api(path, opts = {}) {
+  const wait = opts.wait !== false;
+  if (wait) loading(true, opts.loadingText);
+  try {
+    const res = await fetch(path, opts);
+    const txt = await res.text();
+    let data;
+    try { data = txt ? JSON.parse(txt) : {}; } catch (e) { throw new Error('返回内容不是合法 JSON：' + txt.slice(0, 80)); }
+    if (!res.ok) throw new Error(data.error || data.detail || `HTTP ${res.status}`);
+    return data;
+  } catch (e) {
+    if (opts.silent !== true) toast(opts.errPrefix ? `${opts.errPrefix}：${e.message}` : `请求失败：${e.message}`, 'err', 5200);
+    throw e;
+  } finally {
+    if (wait) loading(false);
+  }
+}
+const post = (path, body, opts = {}) => api(path, {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}), ...opts
+});
+
+/* ---------------- 面板切换与懒加载 ---------------- */
+const LOADED = {};
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  $(id).classList.add('active'); btn.classList.add('active');
+  CHARTS.forEach(c => setTimeout(() => c.resize(), 30));
+  const first = { board: refreshBoard, report: loadReportHistory, bench: null, rpa: () => loadTasks(false),
+                  kb: loadKb, kg: loadGraph, agent: loadAgent, forecast: loadForecast }[id];
+  if (first && !LOADED[id]) { LOADED[id] = true; first(); }
+}
+
+/* ---------------- 初始化 ---------------- */
+async function init() {
+  try {
+    META = await api('/api/meta', { wait: false });
+  } catch (e) {
+    $('llmBadge').textContent = '连接失败';
+    document.body.insertAdjacentHTML('afterbegin',
+      `<div style="background:#fdecea;color:#c0392b;padding:12px 28px;font-size:14px;">
+        ⚠ 后端接口连接失败。请勿直接双击打开本文件，应先启动服务后访问
+        <b>http://127.0.0.1:8000</b>：cd pharma-cost-system && python -m uvicorn app.main:app --port 8000
+      </div>`);
+    return;
+  }
+  const llm = META.llm || {};
+  $('llmBadge').textContent = META.llm_ready
+    ? `大模型：已连接（大 ${llm.roles?.large?.model || '-'}／小 ${llm.roles?.small?.model || '-'}）`
+    : '大模型：本地规则模式（未配置 API Key）';
+  $('llmBadge').classList.toggle('ok', !!META.llm_ready);
+  const rag = META.rag || {};
+  $('ragBadge').textContent = `RAG：${rag.检索模式 || '-'}（${rag.嵌入器 || '-'} + ${rag.向量后端 || '-'}）`
+    + (rag.知识图谱 ? `｜图谱 ${rag.知识图谱.节点数} 节点` : '');
+  const engCN = { matplotlib: 'matplotlib', pillow: 'Pillow', gdi: 'Windows GDI+' };
+  $('capBadge').textContent = `图表：${engCN[META.charts_engine] || '不可用'}｜PDF：${(META.pdf_backends || []).join('/') || '无'}`;
+
+  for (const sel of ['selMonth', 'repMonth', 'bmMonth', 'rpaMonth', 'agMonth']) {
+    $(sel).innerHTML = META.months.map(m => `<option>${m}</option>`).join('');
+    $(sel).value = META.months[META.months.length - 1];
+  }
+  $('selMonth').value = META.months[META.months.length - 2] || META.months[0];
+  for (const sel of ['selProduct', 'repProduct', 'rpaProduct', 'agProduct']) {
+    $(sel).innerHTML = '<option value="">全部产品</option>' + META.products.map(p => `<option>${p}</option>`).join('');
+  }
+  $('fcProduct').innerHTML = META.products.map(p => `<option>${p}</option>`).join('');
+  $('kgFocus').innerHTML = '<option value="">全部（概览）</option>' +
+    ['六味地黄胶囊', '板蓝根颗粒', '银黄口服液', '直接材料', '直接人工', '制造费用'].map(p => `<option>${p}</option>`).join('');
+  if (META.scenes) $('repScene').innerHTML = META.scenes.map(s => `<option>${s}</option>`).join('');
+  if (META.topics) $('repTopic').innerHTML = META.topics.map(t => `<option>${t}</option>`).join('');
+  $('repEngineHint').textContent = '引擎：' + (engCN[META.charts_engine] || '无图表')
+    + ' / PDF ' + ((META.pdf_backends || []).join('、') || '无');
+  onSceneChange();
+  LOADED.board = true; refreshBoard();
+  loadReportHistory();
+}
+
+function onSceneChange() {
+  $('repTopicWrap').style.display = $('repScene').value === '专题分析' ? '' : 'none';
+}
+
+/* ---------------- 成本看板 ---------------- */
+async function refreshBoard() {
+  if (typeof echarts === 'undefined') {
+    $('boardHint').textContent = '图表库(echarts.min.js)加载失败，请确认通过 http://127.0.0.1:8000 访问本页面。';
+    return;
+  }
+  try {
+    const m = $('selMonth').value, p = $('selProduct').value;
+    const kpi = await api(`/api/kpi?month=${m}&product=${p ? encodeURIComponent(p) : ''}`, { silent: true });
+    $('boardHint').textContent = `数据：中药一厂 6 个月 × 3 产品模拟数据 · 当前口径：${kpi['产品']} · ${m}`;
+    $('kpiCards').innerHTML = `
+    <div class="card"><div class="label">本月总成本(元)</div><div class="value">${fmt(kpi['总成本'] ?? kpi['本月总成本'])}</div></div>
+    <div class="card"><div class="label">环比变动</div><div class="value ${cls(kpi['环比变动率'])}">${pct(kpi['环比变动率'])}</div></div>
+    <div class="card"><div class="label">同比变动</div><div class="value ${cls(kpi['同比变动率'])}">${pct(kpi['同比变动率'])}</div></div>
+    <div class="card"><div class="label">预算偏差</div><div class="value ${cls(kpi['预算偏差'])}">${pct(kpi['预算偏差'])}</div></div>
+    <div class="card"><div class="label">产量(盒)</div><div class="value">${fmt(kpi['产量'])}</div></div>`;
+    for (const [name, fn] of [['趋势图', () => drawTrend(p)], ['构成图', () => drawPie(m, p)],
+                              ['瀑布图', () => drawWater(kpi)], ['热力图', () => drawHeat()]]) {
+      try { await fn(); } catch (e) { console.error(name + '渲染失败:', e); }
+    }
+    const alerts = (await api(`/api/alerts?month=${m}`, { silent: true })).alerts;
+    $('alertList').innerHTML = alerts.length ? alerts.map(a =>
+      `<div class="alert-item">【${a['产品']}】${a['要素']}环比 <b class="${cls(a['环比'])}">${pct(a['环比'])}</b>（${fmt(a['上月'])} → ${fmt(a['本月'])}），超过 ±${a['阈值']}% 告警阈值，已纳入重点分析。</div>`
+    ).join('') : '<span class="hint">本月无超阈值波动。</span>';
+    const mats = await api(`/api/material_diff?month=${m}${p ? '&product=' + encodeURIComponent(p) : ''}`, { silent: true });
+    $('matTable').innerHTML = '<tr><th>产品</th><th>药材</th><th>单价变动</th><th>单耗变动</th><th>材料成本变动额(元)</th></tr>' +
+      mats.slice(0, 8).map(r => `<tr><td>${esc(r['产品'])}</td><td>${esc(r['药材'])}</td><td class="${cls(r['单价变动'])}">${pct(r['单价变动'])}</td><td class="${cls(r['单耗变动'])}">${pct(r['单耗变动'])}</td><td class="${cls(r['变动额'])}">${fmt(r['变动额'])}</td></tr>`).join('');
+  } catch (e) {
+    $('boardHint').innerHTML = `<span style="color:#c0392b">看板加载失败：${esc(e.message)}。请确认服务已启动并访问 http://127.0.0.1:8000</span>`;
+  }
+}
+
+async function drawTrend(p) {
+  const rows = await api(`/api/trend${p ? '?product=' + encodeURIComponent(p) : ''}`, { silent: true });
+  chart('chartTrend').setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['总成本(万元)', '单位成本(元/盒)'], top: 0 },
+    grid: { left: 50, right: 50, top: 36, bottom: 28 },
+    xAxis: { type: 'category', data: rows.map(r => r['月份']) },
+    yAxis: [{ type: 'value', name: '万元' }, { type: 'value', name: '元/盒' }],
+    series: [
+      { name: '总成本(万元)', type: 'line', smooth: true, data: rows.map(r => +(r['总成本'] / 10000).toFixed(1)),
+        itemStyle: { color: '#0f6e56' }, areaStyle: { color: 'rgba(15,110,86,.08)' } },
+      { name: '单位成本(元/盒)', type: 'line', smooth: true, yAxisIndex: 1, data: rows.map(r => r['单位成本']),
+        itemStyle: { color: '#d85a30' } }
+    ]
+  }, true);
+}
+
+async function drawPie(m, p) {
+  const s = await api(`/api/structure?month=${m}&product=${p ? encodeURIComponent(p) : ''}`, { silent: true });
+  chart('chartPie').setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { orient: 'vertical', right: 8, top: 'middle', itemWidth: 14, itemHeight: 10,
+      formatter: name => { const it = Object.entries(s).find(([k]) => k === name);
+        return it ? `${name}  ${it[1].toFixed(2)} 元/盒` : name; } },
+    series: [{ type: 'pie', radius: ['38%', '60%'], center: ['36%', '52%'],
+      label: { show: false },
+      data: Object.entries(s).map(([k, v]) => ({ name: k, value: v })) }]
+  }, true);
+}
+
+function drawWater(kpi) {
+  const items = kpi['贡献度'] || [];
+  const x = items.map(i => i['要素']), dv = items.map(i => i['变动额']);
+  let base = 0;
+  const segs = dv.map(d => { const lo = Math.min(base, base + d), hi = Math.max(base, base + d);
+    const seg = { lo, hi, d }; base += d; return seg; });
+  chart('chartWater').setOption({
+    tooltip: { trigger: 'item', formatter: p => `${x[p.value[0]]}：${dv[p.value[0]] > 0 ? '+' : ''}${dv[p.value[0]]} 元/盒（累计 ${segs[p.value[0]].hi.toFixed(3)}）` },
+    grid: { left: 60, right: 30, top: 30, bottom: 40 },
+    xAxis: { type: 'category', data: x, axisLabel: { interval: 0, fontSize: 11 } },
+    yAxis: { type: 'value', name: '元/盒', scale: true },
+    series: [{
+      type: 'custom',
+      renderItem: (params, api) => {
+        const i = api.value(0);
+        const top = api.coord([i, segs[i].hi]), bot = api.coord([i, segs[i].lo]);
+        const w = api.size([1, 0])[0] * 0.45;
+        return {
+          type: 'rect',
+          shape: { x: top[0] - w / 2, y: top[1], width: w, height: Math.max(2, bot[1] - top[1]) },
+          style: { fill: dv[i] > 0 ? '#c0392b' : '#27ae60' },
+          textConfig: { position: dv[i] > 0 ? 'top' : 'bottom' },
+          textContent: { type: 'text', style: { fill: '#345', fontSize: 11, text: (dv[i] > 0 ? '+' : '') + dv[i].toFixed(3) } }
+        };
+      },
+      data: segs.map((s, i) => [i, s.hi])
+    }]
+  }, true);
+}
+
+async function drawHeat() {
+  const rows = await api('/api/heatmap', { silent: true });
+  const months = META.months, cells = [];
+  const fullYs = [];
+  for (const p of META.products) for (const e of ['直接材料', '直接人工', '制造费用']) fullYs.push(`${p}·${e}`);
+  const ys = fullYs.map(y => y.replace('口服液', '').replace('颗粒', '').replace('胶囊', '').replace('·直接', '·'));
+  for (const r of rows) cells.push([months.indexOf(r['月份']), fullYs.indexOf(`${r['产品']}·${r['要素']}`), r['环比'] ?? 0]);
+  chart('chartHeat').setOption({
+    tooltip: { formatter: p => `${fullYs[p.value[1]]}<br>${months[p.value[0]]}：${(p.value[2] ?? 0).toFixed(2)}%` },
+    grid: { left: 96, right: 84, top: 14, bottom: 34 },
+    xAxis: { type: 'category', data: months, axisLabel: { interval: 0, fontSize: 10 } },
+    yAxis: { type: 'category', data: ys, axisLabel: { fontSize: 10 } },
+    visualMap: { min: -8, max: 8, calculable: true, orient: 'vertical', right: 0, top: 'center',
+      itemHeight: 120, textStyle: { fontSize: 10 },
+      inRange: { color: ['#27ae60', '#f7f7f2', '#c0392b'] } },
+    series: [{ type: 'heatmap', data: cells, label: { show: true, fontSize: 9, formatter: p => (p.value[2] ?? 0).toFixed(1) + '%' } }]
+  }, true);
+}
+
+/* ---------------- 报告生成 ---------------- */
+async function genReport() {
+  const m = $('repMonth').value, p = $('repProduct').value || null;
+  const scene = $('repScene').value, topic = $('repTopic').value;
+  $('repResult').style.display = 'block';
+  $('repText').innerHTML = '<span class="loading-inline"></span> 生成中：模板解析 → 数据填充 → 服务端图表渲染 → RAG 检索 → 大模型撰写 → Word/PDF 导出（约 10~60 秒）';
+  $('repMeta').innerHTML = ''; $('repCharts').innerHTML = '';
+  $('repBtn').disabled = true;
+  $('repLink').classList.add('disabled'); $('repPdfLink').classList.add('disabled');
+  try {
+    const res = await post('/api/report', { month: m, product: p, scene, topic },
+                           { loadingText: '正在生成报告（含图表与 PDF）…' });
+    $('repText').textContent =
+      `【总成本概览评述】\n${res.values['总成本概览评述']}\n\n【要素/产品归因分析】\n${res.values['要素归因分析']}\n\n【总结】\n${res.values['总结']}\n\n【改进建议】\n${res.values['改进建议']}`;
+    $('repMeta').innerHTML =
+      `<b>报告标题：</b>${esc(res.stats['报告标题'])}<br>` +
+      `<b>分析周期：</b>${esc(res.period.kind)} · ${esc(res.period.label)}（${esc(res.period.span)}）　<b>目标产品：</b>${esc(res.product)}<br>` +
+      `<b>成稿结构：</b>模板占位符填充 + ${res.stats['表格数']} 张表格 + ${res.stats['图表数']} 张图表 + ` +
+      `${res.stats['知识库引用']} 条知识库引用（图表引擎 ${esc(res.stats['图表引擎'])}）　<b>占位符残留：</b>${res.leftover.length} 处`;
+    $('repSrc').textContent = `RAG 引用来源：${res.sources.map(s => s.source).join('、') || '—'} · 分析引擎：${res.engine === 'llm' ? '大模型（RAG 增强）' : '本地规则'} · 告警 ${res.alerts.length} 条`;
+    $('repLink').href = res.download; $('repLink').classList.remove('disabled');
+    if (res.pdf_ok) {
+      $('repPdfLink').href = res.download_pdf; $('repPdfLink').classList.remove('disabled');
+      $('repPdfNote').innerHTML = `<span class="badge-ok">PDF 已生成</span> 引擎：${esc(res.pdf_engine)} · ${esc(res.pdf_note)}`;
+    } else {
+      $('repPdfLink').href = '#'; $('repPdfLink').classList.add('disabled');
+      $('repPdfNote').innerHTML = `<span class="badge-warn">PDF 未生成</span> ${esc(res.pdf_note || '')}`;
+    }
+    const caps = res.chart_captions || {};
+    $('repCharts').innerHTML = Object.keys(res.charts || {}).map(k =>
+      `<figure><img src="${res.charts[k]}" alt="${esc(caps[k] || k)}"><figcaption>${esc(caps[k] || k)}</figcaption></figure>`).join('');
+    toast('报告生成完成（Word + ' + (res.pdf_ok ? 'PDF' : '无 PDF') + '）', 'ok');
+    loadReportHistory();
+  } catch (e) {
+    $('repText').textContent = '生成失败：' + e.message;
+  } finally {
+    $('repBtn').disabled = false;
+  }
+}
+
+async function loadReportHistory() {
+  try {
+    const res = await api('/api/report/list', { silent: true, wait: false });
+    const rows = res.reports || [];
+    $('repHistory').innerHTML = '<tr><th>报告</th><th>生成时间</th><th>大小</th><th>导出</th></tr>' +
+      (rows.map(r => `<tr><td>${esc(r.base)}</td><td>${esc(r.mtime)}</td><td>${r.size_kb} KB</td><td>` +
+        (r.docx ? `<a class="btn ghost" style="padding:4px 12px" href="/api/report/download?file=${encodeURIComponent(r.docx)}" download>Word</a> ` : '') +
+        (r.pdf ? `<a class="btn pdf" style="padding:4px 12px" href="/api/report/download?file=${encodeURIComponent(r.pdf)}" download>PDF</a>` : '<span class="hint">无 PDF</span>') +
+        `</td></tr>`).join('') || '<tr><td colspan="4" style="color:#99a">暂无历史报告</td></tr>');
+  } catch (e) { /* 忽略 */ }
+}
+
+/* ---------------- 对标三步法 ---------------- */
+async function runBench() {
+  const m = $('bmMonth').value;
+  $('bmHint').innerHTML = '<span class="loading-inline"></span> 执行中（找差异 → 拆结构 → 拆原因）…';
+  try {
+    const res = await api(`/api/benchmark?month=${m}&use_llm=true`, { wait: false });
+    $('bmTable').innerHTML = '<tr><th>产品</th><th>一厂单位成本</th><th>二厂单位成本</th><th>差异额</th><th>差异率</th><th>材料</th><th>人工</th><th>制造费用</th></tr>' +
+      res['差异对比表'].map(r => `<tr><td>${esc(r['产品'])}</td><td>${r['一厂单位成本']}</td><td>${r['二厂单位成本']}</td><td class="${cls(r['差异额'])}">${r['差异额']}</td><td class="${cls(r['差异率%'])}">${pct(r['差异率%'])}</td><td>${pct(r['材料差异率%'])}</td><td>${pct(r['人工差异率%'])}</td><td>${pct(r['制造费用差异率%'])}</td></tr>`).join('');
+    const t = res['结构树'];
+    $('bmTree').textContent = `差异最大产品：${t['产品']}（单位成本差异 ${t['单位成本差异率%'] > 0 ? '+' : ''}${t['单位成本差异率%']}%）\n` +
+      t['结构拆解'].map(s => `  ${s['要素']}：${s['差异率%'] > 0 ? '+' : ''}${s['差异率%']}%`).join('\n') + `\n主因要素：${t['主因要素']}`;
+    $('bmRca').textContent = res['归因分析'];
+    $('bmSrc').textContent = `RAG 引用来源：${res.sources.map(s => s.source).join('、') || '—'} · 引擎：${res.engine === 'llm' ? '大模型' : '本地规则'}`;
+    $('bmHint').textContent = `完成 · ${m} · 引擎：${res.engine === 'llm' ? '大模型' : '本地规则'}`;
+  } catch (e) {
+    $('bmHint').innerHTML = `<span style="color:#c0392b">执行失败：${esc(e.message)}</span>`;
+  }
+}
+
+/* ---------------- 整改闭环 ---------------- */
+async function dispatchRpa() {
+  const m = $('rpaMonth').value, p = $('rpaProduct').value || null;
+  $('rpaHint').innerHTML = '<span class="loading-inline"></span> 生成并推送中…';
+  try {
+    const res = await post('/api/rpa/dispatch', { month: m, product: p }, { wait: false });
+    const ok = res.results.filter(r => r.ok).length;
+    toast(`已生成 ${res.tasks.length} 条整改任务，推送成功 ${ok} 条（引擎：${res.engine === 'llm' ? '大模型' : '规则'}）`,
+          ok === res.tasks.length ? 'ok' : 'warn');
+    $('rpaHint').textContent = `最近一次：${res.tasks.length} 条任务，成功 ${ok} 条`;
+    await loadTasks(false);
+  } catch (e) {
+    $('rpaHint').innerHTML = `<span style="color:#c0392b">推送失败：${esc(e.message)}</span>`;
+  }
+}
+
+async function loadTasks(refresh = false) {
+  try {
+    const res = await api(`/api/rpa/tasks?refresh=${refresh}`, { silent: true });
+    $('rpaStats').innerHTML = ['已生成', '已发送', '已确认', '已完成'].map(k =>
+      `<div class="card"><div class="label">${k}任务</div><div class="value">${res.stats[k] ?? 0}</div></div>`).join('')
+      + `<div class="card"><div class="label">平均闭环时长</div><div class="value">${res.stats['平均闭环时长(分钟)'] ?? '—'}</div><div class="sub">分钟</div></div>`;
+    $('rpaTable').innerHTML = '<tr><th>任务ID</th><th>任务标题</th><th>责任人</th><th>优先级</th><th>状态</th><th>问题描述</th></tr>' +
+      res.tasks.map(t => `<tr><td>${esc(t.task_id)}</td><td>${esc(t.task_title)}</td><td>${esc(t['责任人'] || '')}</td><td><span class="tag ${t['优先级'] === 'high' ? 'high' : t['优先级'] === 'medium' ? 'mid' : 'low'}">${RPA_PRIO_CN[t['优先级']] || t['优先级']}</span></td><td>${RPA_STATUS_CN[t.status] || t.status}</td><td style="max-width:280px;font-size:12px">${esc(t.finding || '')}</td></tr>`).join('')
+      || '<tr><td colspan="6" style="color:#99a">暂无任务</td></tr>';
+  } catch (e) { /* 提示已由 api() 弹出 */ }
+  await loadTimeline();
+}
+
+async function loadTimeline() {
+  try {
+    const res = await api('/api/rpa/timeline?limit=12', { silent: true, wait: false });
+    const rows = res['时间轴'] || [];
+    if (!rows.length) { $('rpaTimeline').innerHTML = '<span class="hint">暂无任务事件，先下发整改任务。</span>'; return; }
+    $('rpaTimeline').innerHTML = rows.map(t => `
+      <div class="tl-item ${t['闭环'] ? 'done' : ''}">
+        <div class="tl-head">${esc(t.task_title)} <span class="tag ${t['优先级'] === 'high' ? 'high' : t['优先级'] === 'medium' ? 'mid' : 'low'}">${RPA_PRIO_CN[t['优先级']] || t['优先级']}</span>
+          <span class="tag info">${esc(t['当前状态'])}</span></div>
+        <div class="tl-body">${esc(t.task_id)} · ${esc(t['责任人'])} · 产品 ${esc(t['产品'])} · ${esc(t['月份'])} · 截止 ${esc(t['截止时间'])} · 事件 ${t['事件数']} 次</div>
+        <div class="tl-sub">${t['状态链'].map(e => `<div>${esc(e['时间'])} → <b>${esc(e['状态'])}</b>（${esc(e['说明'])}${e['停留分钟'] != null ? `，停留 ${e['停留分钟']} 分钟` : ''}）</div>`).join('')}</div>
+      </div>`).join('');
+  } catch (e) { /* 忽略 */ }
+}
+
+const RPA_STATUS_CN = {sent:'已发送', received:'已接收', confirmed:'已确认', in_progress:'处理中', completed:'已完成', overdue:'已逾期', '发送失败':'发送失败'};
+const RPA_PRIO_CN = {high:'高', medium:'中', low:'低'};
+
+/* ---------------- 知识库检索 ---------------- */
+async function loadKb() {
+  try {
+    const st = await api('/api/knowledge/stats', { silent: true });
+    const s = st['统计'];
+    $('kbStats').innerHTML =
+      `<b>文档：</b>${s['文档数']} 份（${Object.entries(s['文档格式']).map(([k, v]) => k + ' ' + v).join('、')}）　` +
+      `<b>知识块：</b>${s['知识块数']} 个（平均 ${s['平均块长']} 字）<br>` +
+      `<b>切分策略：</b>chunk_size=${s['切分参数'].chunk_size}，overlap=${s['切分参数'].overlap}，min_chunk=${s['切分参数'].min_chunk}　` +
+      `<b>检索：</b>${esc(s['检索模式'])}（嵌入 ${esc((s['嵌入器'] || {}).name)} + 向量库 ${esc(s['向量后端'])}）` +
+      `${s['知识图谱'] ? `　<b>知识图谱：</b>${s['知识图谱']['节点数']} 节点 / ${s['知识图谱']['关系数']} 关系` : ''}<br>` +
+      `<b>文档清单：</b>${st['文档清单'].map(d => esc(d['来源'])).join('、')}`;
+  } catch (e) { /* 忽略 */ }
+  searchKb();
+}
+
+async function searchKb() {
+  const q = $('kbQuery').value, mode = $('kbMode').value;
+  if (!q.trim()) { toast('请输入检索问题', 'warn'); return; }
+  $('kbResults').innerHTML = '<span class="loading-inline"></span> 检索中…';
+  try {
+    const res = await api(`/api/knowledge/search?q=${encodeURIComponent(q)}&top_k=5${mode ? '&mode=' + mode : ''}`, { silent: true });
+    $('kbResults').innerHTML = res.length ? res.map((h, i) =>
+      `<div class="section" style="margin-top:10px"><b>${i + 1}. ${esc(h.source)}</b>
+        <span class="hint">score=${h.score}｜BM25=${h.bm25}｜向量=${h.vector}｜召回=${esc(h.retriever)}${h.graph ? `｜图谱加权=${h.graph}` : ''}｜${esc(h.doc_id)}</span>
+        <div class="rca-text">${esc(h.snippet)}</div></div>`).join('')
+      : '<span class="hint">无检索结果</span>';
+  } catch (e) {
+    $('kbResults').innerHTML = `<span style="color:#c0392b">检索失败：${esc(e.message)}</span>`;
+  }
+}
+
+/* ---------------- 知识图谱 ---------------- */
+async function loadGraph() {
+  const focus = $('kgFocus').value;
+  $('kgHint').innerHTML = '<span class="loading-inline"></span> 加载图谱…';
+  try {
+    const res = await api(`/api/knowledge/graph?limit=90${focus ? '&focus=' + encodeURIComponent(focus) : ''}${focus ? '&triples=30' : ''}`, { silent: true });
+    const g = res.echarts, st = res['统计'] || {};
+    $('kgHint').textContent = `节点 ${st['节点数'] || 0} · 关系 ${st['关系数'] || 0}` +
+      (st['实体类型分布'] ? `（${Object.entries(st['实体类型分布']).map(([k, v]) => k + ' ' + v).join('、')}）` : '');
+    if (!g || !g.nodes.length) { $('kgChart').innerHTML = '<div class="hint">图谱为空</div>'; return; }
+    const showLabel = $('kgShowEvidence').checked;
+    chart('kgChart').setOption({
+      tooltip: { formatter: p => p.dataType === 'edge'
+        ? `${p.data.source} —${p.data.value}→ ${p.data.target}<br><span style="color:#889">证据：${esc((p.data.evidence || '').slice(0, 60))}</span>`
+        : `${p.data.name}<br>类型：${p.data.value || ''}${p.data.attrs && Object.keys(p.data.attrs).length ? '<br>' + Object.entries(p.data.attrs).map(([k, v]) => k + '：' + esc(v)).join('<br>') : ''}` },
+      legend: [{ data: g.categories.map(c => c.name), top: 0, textStyle: { fontSize: 11 } }],
+      series: [{
+        type: 'graph', layout: 'force', roam: true, draggable: true, focusNodeAdjacency: true,
+        categories: g.categories, data: g.nodes,
+        links: g.links.map(l => ({ ...l, label: { show: showLabel, formatter: l.value, fontSize: 9 } })),
+        force: { repulsion: 320, edgeLength: [60, 140], gravity: 0.06 },
+        label: { show: true, fontSize: 11, position: 'right' },
+        lineStyle: { color: '#c8d2dd', width: 1.2, curveness: 0.08 },
+        emphasis: { lineStyle: { width: 3 }, label: { fontWeight: 'bold' } },
+        edgeSymbol: ['none', 'arrow'], edgeSymbolSize: 6
+      }]
+    }, true);
+    chart('kgChart').off('click');
+    chart('kgChart').on('click', p => { if (p.dataType === 'node') loadGraphDetail(p.data.name); });
+    if (focus) loadGraphDetail(focus);
+    else $('kgDetail').innerHTML = `<h3>实体详情</h3><div class="kv">当前为全量概览（纳入 ${g.nodes.length} 个节点 / ${g.links.length} 条关系）。` +
+      `点击任一节点可查看其 1 跳关系与证据原文。图谱由 <code>app/knowledge_graph.py</code> 从配方、工艺、设备、行情、GMP、异常记录文本抽取。</div>`;
+  } catch (e) {
+    $('kgHint').innerHTML = `<span style="color:#c0392b">图谱加载失败：${esc(e.message)}</span>`;
+  }
+}
+
+async function loadGraphDetail(name) {
+  try {
+    const res = await api(`/api/knowledge/graph?focus=${encodeURIComponent(name)}&triples=40`, { silent: true, wait: false });
+    const nb = res['邻居'] || {}, triples = res['三元组'] || [];
+    const type = (res.echarts.nodes.find(n => n.name === name) || {}).value || '';
+    $('kgDetail').innerHTML = `<h3>实体详情 · ${esc(name)} <span class="tag info">${esc(type)}</span></h3>
+      <div class="kv"><b>1 跳关联实体（${Object.keys(nb).length}）：</b>${
+        Object.entries(nb).map(([k, v]) => `${esc(k)}<span class="hint">(${v.map(r => esc(r['关系'])).join('、')})</span>`).join('　') || '—'}</div>
+      <div class="table-wrap"><table style="margin-top:10px"><tr><th>头实体</th><th>关系</th><th>尾实体</th><th>证据原文</th><th>来源文档</th></tr>
+      ${triples.map(t => `<tr><td>${esc(t['头'])}</td><td><span class="tag info">${esc(t['关系'])}</span></td><td>${esc(t['尾'])}</td><td style="font-size:12px">${esc(t['证据'])}</td><td style="font-size:12px">${esc(t['来源'])}</td></tr>`).join('')}
+      </table></div>`;
+  } catch (e) { /* 忽略 */ }
+}
+
+/* ---------------- 智能体决策 ---------------- */
+async function loadAgent() {
+  try {
+    const p = await api('/api/agent/policy', { silent: true });
+    $('agentPolicy').innerHTML = `<b>决策链：</b>${p['决策链'].join(' → ')}<br>` +
+      `<b>阈值：</b>${Object.entries(p['策略阈值']).map(([k, v]) => `${k}=${v}`).join('，')}<br>` +
+      `<b>动作：</b>${Object.entries(p['动作定义']).map(([k, v]) => `${k}（${v}）`).join('；')}<br>` +
+      `<span class="hint">${esc(p['说明'])}</span>`;
+  } catch (e) { /* 忽略 */ }
+  loadAgentHistory();
+}
+
+async function decideAgent() {
+  const body = { month: $('agMonth').value, product: $('agProduct').value || null, use_llm: false };
+  try {
+    const d = await post('/api/agent/decide', body, { wait: false });
+    renderDecision(d);
+  } catch (e) { /* 已提示 */ }
+}
+
+async function runAgent() {
+  const body = { month: $('agMonth').value, product: $('agProduct').value || null, use_llm: true };
+  $('agentHint').innerHTML = '<span class="loading-inline"></span> 决策并执行中（可能触发报告生成与 RPA 下发）…';
+  try {
+    const res = await post('/api/agent/run', body, { wait: false });
+    renderDecision(res['决策']);
+    const logs = (res['执行日志'] || []).map(l => `• ${esc(l)}`).join('<br>');
+    let extra = '';
+    if (res['报告']) extra += `<br><b>报告：</b>${esc(res['报告'].file)}（图表 ${res['报告']['图表数']} 张，PDF ${esc(res['报告'].pdf_engine || '无')}）
+      <a class="btn ghost" style="padding:3px 10px" href="${res['报告'].download}" download>Word</a>
+      ${res['报告'].download_pdf ? `<a class="btn pdf" style="padding:3px 10px" href="${res['报告'].download_pdf}" download>PDF</a>` : ''}`;
+    if (res['整改']) extra += `<br><b>整改任务：</b>${res['整改'].任务数} 条（成功 ${res['整改'].成功} 条）：${
+      res['整改'].任务.map(t => esc(t.task_id) + ' ' + esc(t.title)).join('；')}`;
+    $('agentExec').innerHTML = `<b>执行日志（${res['耗时毫秒']} ms）：</b><br>${logs}${extra}`;
+    toast(`智能体已执行：${res['决策']['动作']}`, 'ok');
+    loadAgentHistory();
+    loadTasks(false);
+  } catch (e) {
+    $('agentHint').innerHTML = `<span style="color:#c0392b">执行失败：${esc(e.message)}</span>`;
+  }
+}
+
+function renderDecision(d) {
+  $('agentResult').style.display = 'block';
+  $('agentHint').textContent = `${d['月份']} · ${d['产品']} · ${d['决策时间']}`;
+  const prioCls = d['优先级'] === 'high' ? 'high' : d['优先级'] === 'medium' ? 'mid' : 'low';
+  $('agentDecision').innerHTML =
+    `<b>动作：</b><span class="tag ${prioCls}">${esc(d['动作'])}</span>　<b>优先级：</b>${esc(d['优先级'])}　` +
+    `<b>建议主题：</b>${esc(d['建议分析主题'])}${d['建议专题'] ? ' / ' + esc(d['建议专题']) : ''}<br>` +
+    `<b>关键指标：</b>单位成本 ${fmt(d['关键指标']['单位成本'])} 元/盒，环比 ${pct(d['关键指标']['环比变动率'])}，` +
+    `同比 ${pct(d['关键指标']['同比变动率'])}，预算偏差 ${pct(d['关键指标']['预算偏差'])}，告警 ${d['关键指标']['告警条数']} 条<br>` +
+    `<b>工具调用：</b>${d['工具调用'].join(' → ')}（观察耗时 ${d['观察耗时毫秒']} ms）　<b>推理引擎：</b>${d['推理引擎'] === 'llm' ? '大模型（small 角色）' : '规则引擎'}`;
+  $('agentReason').textContent = '【决策推理】' + d['推理'];
+  $('agentChecks').innerHTML = '<tr><th>判定指标</th><th>实测值</th><th>阈值</th><th>判定</th></tr>' +
+    d['触发依据'].map(c => `<tr><td>${esc(c['指标'])}</td><td>${esc(c['实测'])}</td><td>${esc(c['阈值'])}</td>
+      <td><span class="tag ${c['判定'] === '高风险' ? 'high' : c['判定'] === '需关注' ? 'mid' : 'low'}">${esc(c['判定'])}</span></td></tr>`).join('');
+}
+
+async function loadAgentHistory() {
+  try {
+    const res = await api('/api/agent/history?limit=10', { silent: true, wait: false });
+    const rows = res.history || [];
+    $('agentHistory').innerHTML = '<tr><th>时间</th><th>月份</th><th>产品</th><th>动作</th><th>优先级</th><th>执行</th></tr>' +
+      (rows.map(r => `<tr><td>${esc(r['时间'])}</td><td>${esc(r['月份'])}</td><td>${esc(r['产品'])}</td>
+        <td>${esc(r['动作'])}</td><td>${esc(r['优先级'])}</td><td style="font-size:12px">${esc((r['执行'] || []).join('；'))}</td></tr>`).join('')
+        || '<tr><td colspan="6" style="color:#99a">暂无决策记录</td></tr>');
+  } catch (e) { /* 忽略 */ }
+}
+
+/* ---------------- 成本预测 ---------------- */
+async function loadForecast() {
+  const p = $('fcProduct').value, steps = $('fcSteps').value;
+  $('fcHint').innerHTML = '<span class="loading-inline"></span> 运行四模型回测…';
+  try {
+    const res = await api(`/api/forecast?product=${encodeURIComponent(p)}&steps=${steps}`, { silent: true });
+    const it = (res.items || [])[0];
+    if (!it) { $('fcHint').textContent = '该产品历史数据不足，无法建模'; return; }
+    const hist = it['历史序列'], fut = it['预测单位成本'];
+    const xs = hist.map(h => h['月份']).concat(it['预测月份']);
+    const histData = hist.map(h => h['单位成本']).concat(new Array(fut.length).fill(null));
+    const fcData = new Array(hist.length - 1).fill(null).concat([hist[hist.length - 1]['单位成本']]).concat(fut);
+    chart('fcChart').setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['历史单位成本', '预测单位成本'], top: 0 },
+      grid: { left: 60, right: 30, top: 40, bottom: 40 },
+      xAxis: { type: 'category', data: xs },
+      yAxis: { type: 'value', name: '元/盒', scale: true },
+      series: [
+        { name: '历史单位成本', type: 'line', smooth: true, data: histData, itemStyle: { color: '#0f6e56' } },
+        { name: '预测单位成本', type: 'line', smooth: true, data: fcData, itemStyle: { color: '#d85a30' },
+          lineStyle: { type: 'dashed' }, markLine: { silent: true, symbol: 'none',
+            data: [{ xAxis: hist[hist.length - 1]['月份'], label: { formatter: '预测起点' } }] } }
+      ]
+    }, true);
+    $('fcTable').innerHTML = '<tr><th>模型</th><th>回测 MAPE</th><th>MAPE(%)</th><th>下月预测(元/盒)</th><th>权重</th><th>说明</th></tr>' +
+      (it['模型对比'] || []).map(m => `<tr><td>${esc(m['模型'])}${m['模型'] === it['最优模型'] ? ' <span class="tag low">最优</span>' : ''}</td>
+        <td>${m['回测MAPE'] ?? '—'}</td><td>${esc(m['MAPE百分比'] || '—')}</td><td>${m['下月预测'] ?? '—'}</td>
+        <td>${m['权重'] ?? '—'}</td><td style="font-size:12px">${esc(m['说明'] || '')}</td></tr>`).join('');
+    $('fcNote').innerHTML = `<b>结论：</b>最优模型 <b>${esc(it['最优模型'])}</b>，预测 ${it['预测月份'].join('、')} 单位成本 ` +
+      `${fut.join('、')} 元/盒（趋势：${esc(it['预测趋势'])}）。` +
+      `回测口径：留出法（前 n-2 个月拟合、预测最后 2 个月）；样本仅 6 个月，结论请在更多历史数据下复核。`;
+    $('fcHint').textContent = `${p} · ${steps} 步预测完成`;
+  } catch (e) {
+    $('fcHint').innerHTML = `<span style="color:#c0392b">预测失败：${esc(e.message)}</span>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

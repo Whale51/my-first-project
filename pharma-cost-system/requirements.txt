@@ -1,0 +1,18 @@
+fastapi>=0.110
+uvicorn>=0.29
+pandas>=2.0
+numpy>=1.26
+python-docx>=1.1
+jieba>=0.42
+openai>=1.30
+httpx>=0.27
+openpyxl>=3.1
+xlsxwriter>=3.2
+# ---- 报告图表嵌入（服务端渲染 PNG，Word / PDF 共用）----
+# 为首选图表引擎；若安装失败或网络受限，系统自动降级到 Windows GDI+ 引擎
+# （app/_render_charts.ps1，零第三方依赖），报告仍能带图生成，只是风格略简。
+matplotlib>=3.7
+pillow>=10.0
+# ---- PDF 双格式导出：reportlab 为纯 Python 原生排版后端（不依赖 Office，离线可用）----
+# 若未安装 reportlab，PDF 会自动改用 LibreOffice（若已装）或本机 Microsoft Word 转换。
+reportlab>=3.6

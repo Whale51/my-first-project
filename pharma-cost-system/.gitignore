@@ -1,0 +1,22 @@
+# ---- 敏感与生成物（务必不要提交）----
+.env
+outputs/
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# ---- 项目内依赖（可选：python scripts/tools/fetch_vendor.py 生成，体积大不必入库）----
+vendor/
+
+# ---- 可再生产物：知识文档解析缓存、运行日志 ----
+data/cache/
+outputs/
+
+# ---- 官方模拟数据（按赛题要求随包分发，仓库中可选）----
+# data_official/
+
+# ---- 编辑器 / 系统 ----
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
